@@ -13,19 +13,20 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import copy
 from dataclasses import dataclass, field
 import json
 import pathlib
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional
 
 import torch
 from torch.utils.data import Dataset
 import transformers
-from transformers import Trainer
 from transformers.trainer_pt_utils import LabelSmoother
+from datasets import load_dataset
 
 from longchat.conversation import get_default_conv_template, SeparatorStyle
+
+from longchat.train.safe_save_trainer import SafeSaveTrainer
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
@@ -154,6 +155,25 @@ def preprocess(
     )
 
 
+def process_pretrain(
+    sources: list[str],
+    tokenizer: transformers.PreTrainedTokenizer,
+) -> Dict:
+    input_ids = tokenizer(
+        sources,
+        return_tensors="pt",
+        padding="max_length",
+        max_length=tokenizer.model_max_length,
+        truncation=True,
+    ).input_ids
+    targets = input_ids.clone()
+    return {
+        "input_ids": input_ids,
+        "labels": targets,
+        "attention_mask": input_ids.ne(tokenizer.pad_token_id),
+    }
+
+
 class SupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
@@ -191,7 +211,11 @@ class LazySupervisedDataset(Dataset):
         self.tokenizer = tokenizer
 
         rank0_print("Loading data...")
-        list_data_dict = json.load(open(data_path, "r"))
+        self.is_pretrain = data_path == "yentinglin/zh_TW_c4"
+        if self.is_pretrain:
+            list_data_dict = load_dataset("yentinglin/zh_TW_c4", split='train')
+        else:
+            list_data_dict = json.load(open(data_path, "r"))
         print(len(list_data_dict))
         if num_data != -1:
             list_data_dict = list_data_dict[:num_data]
@@ -207,7 +231,10 @@ class LazySupervisedDataset(Dataset):
         sources = self.list_data_dict[i]
         if isinstance(i, int):
             sources = [sources]
-        data_dict = preprocess([e["conversations"] for e in sources], self.tokenizer)
+        if self.is_pretrain:
+            data_dict = process_pretrain([e['text'] for e in sources], self.tokenizer)
+        else:
+            data_dict = preprocess([e["conversations"] for e in sources], self.tokenizer)
         if isinstance(i, int):
             data_dict = dict(
                 input_ids=data_dict["input_ids"][0],
@@ -240,6 +267,7 @@ def train():
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
     )
+    model.config.use_cache = False
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -252,7 +280,7 @@ def train():
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     #import os
     #os.environ["WANDB_DISABLED"] = "true"
-    trainer = Trainer(
+    trainer = SafeSaveTrainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
 
