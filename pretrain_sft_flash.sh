@@ -45,5 +45,4 @@ python -m torch.distributed.run --nproc_per_node=8 \
         --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
         --tf32 True  \
         --model_max_length 4096  \
-        --gradient_checkpointing True  \
-        --lazy_preprocess True
+        --gradient_checkpointing True
