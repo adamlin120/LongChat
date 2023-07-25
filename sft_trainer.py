@@ -105,14 +105,28 @@ dataset = dataset.shuffle(seed=42)  # Shuffle the dataset
 dataset = dataset.select(range(int(len(dataset) * 0.0001)))
 
 # Step 3: Define the training arguments
+# training_args = TrainingArguments(
+#     output_dir=script_args.output_dir,
+#     per_device_train_batch_size=script_args.batch_size,
+#     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
+#     learning_rate=script_args.learning_rate,
+#     logging_steps=script_args.logging_steps,
+#     num_train_epochs=script_args.num_train_epochs,
+#     max_steps=script_args.max_steps,
+# )
+# Step 3: Define the training arguments
 training_args = TrainingArguments(
     output_dir=script_args.output_dir,
     per_device_train_batch_size=script_args.batch_size,
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
     learning_rate=script_args.learning_rate,
     logging_steps=script_args.logging_steps,
-    num_train_epochs=script_args.num_train_epochs,
-    max_steps=script_args.max_steps,
+    fsdp=["full_shard", "auto_wrap"],
+    fsdp_transformer_layer_cls_to_wrap="LlamaDecoderLayer",
+    bf16=True,
+    tf32=True,
+    gradient_checkpointing=True,
+    dataloader_num_workers=96,
 )
 
 # Step 4: Define the LoraConfig

@@ -19,30 +19,14 @@ echo "Training llama2 model: ${MODEL_NAME}"
 echo "using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
 
 
-python -m torch.distributed.run --nproc_per_node=8 \
-        sft_trainer.py \
-        --model_name_or_path $MODEL_NAME \
-        --bf16 \
-        --output_dir "zh_llama2/${MODEL_SIZE}" \
-        --num_train_epochs 1    \
-        --per_device_train_batch_size $BATCH_SIZE_PER_GPU  \
-        --per_device_eval_batch_size $BATCH_SIZE_PER_GPU  \
-        --gradient_accumulation_steps $GRADIENT_ACC_STEPS  \
-        --evaluation_strategy no \
-        --save_strategy steps \
-        --save_steps 10000  \
-        --save_total_limit 1 \
-        --push_to_hub True \
-        --hub_model_id "Taiwan_llama2_${MODEL_SIZE}" \
-        --hub_token "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" \
-        --hub_private_repo True \
-        --learning_rate 2e-5 \
-        --weight_decay 0.  \
-        --warmup_ratio 0.03  \
-        --lr_scheduler_type "cosine" \
-        --logging_steps 1  \
-        --fsdp "full_shard auto_wrap" \
-        --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
-        --tf32 True  \
-        --model_max_length 4096  \
-        --gradient_checkpointing True
+python -m torch.distributed.run \
+  --nproc_per_node=8 \
+  sft_trainer.py \
+  --model_name $MODEL_NAME \
+  --log_with "wandb" \
+  --learning_rate "2e-5" \
+  --batch_size 1 \
+  --seq_length 4096 \
+  --gradient_accumulation_steps 1 \
+  --output_dir "zh_llama2/${MODEL_SIZE}"
+
