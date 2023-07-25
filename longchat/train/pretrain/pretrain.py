@@ -13,21 +13,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import copy
 from dataclasses import dataclass, field
 import json
 import pathlib
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional
 
 import torch
 from torch.utils.data import Dataset
-
 import transformers
-from transformers import Trainer
 from transformers.trainer_pt_utils import LabelSmoother
+from datasets import load_dataset, concatenate_datasets
 
-from longchat.conversation import get_default_conv_template, SeparatorStyle
 from tqdm import tqdm
+from longchat.train.safe_save_trainer import SafeSaveTrainer
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
@@ -42,14 +40,8 @@ class DataArguments:
     data_path: str = field(
         default=None, metadata={"help": "Path to the training data."}
     )
-    #num_data: int = field(
-    #    default=-1, metadata={"help": "Number of training data to use."}
-    #)
     begin: int = field(
         default=-1, metadata={"help": "Begin Index"}
-    )
-    min_lr_ratio: float = field(
-        default=0.5, metadata={"help": "Minimal Learning rate"}
     )
     lazy_preprocess: bool = False
 
@@ -94,8 +86,19 @@ class LazySupervisedDataset(Dataset):
         self.total_num = self.stages[str(self.max_length)]
 
         rank0_print("Loading data...")
-        with open(data_path, 'r') as json_file:
-            list_data_dict = list(json_file)
+        self.is_pretrain = data_path == "pretrain"
+        if self.is_pretrain:
+            zh_c4 = load_dataset("yentinglin/zh_TW_c4", split='train')
+            zh_wiki = load_dataset("yentinglin/zh_wiki", split='train')
+
+            en_wiki = load_dataset("wikipedia", "20220301.en", split='train')
+            en_wiki = en_wiki.shuffle(seed=42)  # Shuffle the dataset
+            en_wiki = en_wiki.select(range(int(len(en_wiki) * 0.10)))  # Select the first 10%
+
+            list_data_dict = concatenate_datasets([zh_c4, zh_wiki, en_wiki])
+        else:
+            with open(data_path, 'r') as json_file:
+                list_data_dict = list(json_file)
         
         print(len(list_data_dict))
         if begin != -1:
@@ -121,7 +124,10 @@ class LazySupervisedDataset(Dataset):
     def _prefetch(self):
         orig_index = self.dataset_index
         for i in tqdm(range(self.prefetch_num)):
-            cur_data = json.loads(self.list_data_dict[i + self.dataset_index])
+            if self.is_pretrain:
+                cur_data = self.list_data_dict[i + self.dataset_index]
+            else:
+                cur_data = json.loads(self.list_data_dict[i + self.dataset_index])
             cur_text = cur_data["text"]
             cur_tokenized_text = self.tokenizer(cur_text, return_tensors="pt")
 
@@ -194,11 +200,7 @@ def pretrain():
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
     )
-   # from ..monkey_patch.llama_bias_monkey_patch import LlamaForCausalLMBias
-   # model = LlamaForCausalLMBias.from_pretrained(
-   #     model_args.model_name_or_path,
-   #     cache_dir=training_args.cache_dir,
-   # )
+    model.config.use_cache = False
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -209,10 +211,10 @@ def pretrain():
     tokenizer.pad_token = tokenizer.unk_token
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
-    print(training_args)
-    trainer = Trainer(
+    trainer = SafeSaveTrainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
+
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
         trainer.train(resume_from_checkpoint=True)
     else:
