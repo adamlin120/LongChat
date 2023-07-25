@@ -13,7 +13,7 @@ GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 MODEL_NAME="meta-llama/Llama-2-${MODEL_SIZE}-hf"
 
 export WANDB_PROJECT="Chinese-LLAMA2"
-export WANDB_TAGS="${MODEL_NAME},zh_c4,zh_wiki,en_wiki,${MODEL_SIZE},fsdp,longchat"
+export WANDB_TAGS="${MODEL_NAME},zh_c4,zh_wiki,en_wiki,${MODEL_SIZE},fsdp,trl"
 
 echo "Training llama2 model: ${MODEL_NAME}"
 echo "using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
@@ -23,10 +23,5 @@ python -m torch.distributed.run \
   --nproc_per_node=8 \
   sft_trainer.py \
   --model_name $MODEL_NAME \
-  --log_with "wandb" \
-  --learning_rate "2e-5" \
-  --batch_size 1 \
-  --seq_length 4096 \
-  --gradient_accumulation_steps 1 \
   --output_dir "zh_llama2/${MODEL_SIZE}"
 
