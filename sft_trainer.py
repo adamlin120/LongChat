@@ -101,8 +101,6 @@ en_wiki = en_wiki.shuffle(seed=42)  # Shuffle the dataset
 en_wiki = en_wiki.select(range(int(len(en_wiki) * 0.10)))  # Select the first 10%
 
 dataset = concatenate_datasets([zh_c4, zh_wiki, en_wiki])
-dataset = dataset.shuffle(seed=42)  # Shuffle the dataset
-dataset = dataset.select(range(int(len(dataset) * 0.0001)))
 
 # Step 3: Define the training arguments
 # training_args = TrainingArguments(
@@ -126,7 +124,7 @@ training_args = TrainingArguments(
     bf16=True,
     tf32=True,
     gradient_checkpointing=True,
-    dataloader_num_workers=1,  # TODO: increase this
+    dataloader_num_workers=96,
     evaluation_strategy='no',
     save_strategy='steps',
     save_steps=1000,
