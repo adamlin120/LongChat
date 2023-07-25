@@ -22,7 +22,7 @@ import torch
 from torch.utils.data import Dataset
 import transformers
 from transformers.trainer_pt_utils import LabelSmoother
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 
 from longchat.conversation import get_default_conv_template, SeparatorStyle
 
@@ -211,9 +211,16 @@ class LazySupervisedDataset(Dataset):
         self.tokenizer = tokenizer
 
         rank0_print("Loading data...")
-        self.is_pretrain = data_path == "yentinglin/zh_TW_c4"
+        self.is_pretrain = data_path == "pretrain"
         if self.is_pretrain:
-            list_data_dict = load_dataset("yentinglin/zh_TW_c4", split='train')
+            zh_c4 = load_dataset("yentinglin/zh_TW_c4", split='train')
+            zh_wiki = load_dataset("yentinglin/zh_wiki", split='train')
+
+            en_wiki = load_dataset("wikipedia", "20220301.en", split='train')
+            en_wiki = en_wiki.shuffle(seed=42)  # Shuffle the dataset
+            en_wiki = en_wiki.select(range(int(len(en_wiki) * 0.10)))  # Select the first 10%
+
+            list_data_dict = concatenate_datasets([zh_c4, zh_wiki, en_wiki])
         else:
             list_data_dict = json.load(open(data_path, "r"))
         print(len(list_data_dict))
