@@ -140,6 +140,7 @@ training_args = TrainingArguments(
     weight_decay=0.0,
     num_train_epochs=script_args.num_train_epochs,
     max_steps=script_args.max_steps,
+    ddp_timeout=18000,
 )
 
 # Step 4: Define the LoraConfig
