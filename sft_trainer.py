@@ -117,16 +117,6 @@ if script_args.debug:
     dataset = dataset.select(range(int(len(dataset) * 0.00001)))  # Select the first 10%
 
 # Step 3: Define the training arguments
-# training_args = TrainingArguments(
-#     output_dir=script_args.output_dir,
-#     per_device_train_batch_size=script_args.batch_size,
-#     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
-#     learning_rate=script_args.learning_rate,
-#     logging_steps=script_args.logging_steps,
-#     num_train_epochs=script_args.num_train_epochs,
-#     max_steps=script_args.max_steps,
-# )
-# Step 3: Define the training arguments
 training_args = TrainingArguments(
     output_dir=script_args.output_dir,
     per_device_train_batch_size=script_args.batch_size,
@@ -150,6 +140,8 @@ training_args = TrainingArguments(
     lr_scheduler_type="cosine",
     warmup_ratio=0.03,
     weight_decay=0.0,
+    num_train_epochs=script_args.num_train_epochs,
+    max_steps=script_args.max_steps,
 )
 
 # Step 4: Define the LoraConfig
