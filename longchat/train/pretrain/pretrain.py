@@ -82,7 +82,7 @@ class LazySupervisedDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_length = self.tokenizer.model_max_length
         #self.stages = {"8192": 500000, "16384": 500000, "32768": 300000, "65536": 100000}
-        self.stages = {"8192": 500000}#, "16384":1000 ,"32768": 152500, "65536": 5000}
+        self.stages = {"4096": 6250405}#, "16384":1000 ,"32768": 152500, "65536": 5000}
         self.total_num = self.stages[str(self.max_length)]
 
         rank0_print("Loading data...")

@@ -11,10 +11,9 @@ TOTAL_BATCH_SIZE=8
 GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 
 MODEL_NAME="meta-llama/Llama-2-${MODEL_SIZE}-hf"
-DATASET_NAME="yentinglin/zh_TW_c4"
 
 export WANDB_PROJECT="Chinese-LLAMA2"
-export WANDB_TAGS="${MODEL_NAME},${DATASET_NAME},${MODEL_SIZE},fsdp,longchat"
+export WANDB_TAGS="${MODEL_NAME},zh_c4,zh_wiki,en_wiki,${MODEL_SIZE},fsdp,longchat"
 
 echo "Training llama2 model: ${MODEL_NAME}"
 echo "using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
@@ -23,9 +22,9 @@ echo "using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_AC
 python -m torch.distributed.run --nproc_per_node=8 \
         longchat/train/pretrain/pretrain_flash.py \
         --model_name_or_path $MODEL_NAME \
-        --data_path data/dummy_conversation.json  \
+        --data_path pretrain  \
         --bf16 \
-        --output_dir outputs \
+        --output_dir "zh_llama2/${MODEL_SIZE}" \
         --num_train_epochs 1    \
         --per_device_train_batch_size $BATCH_SIZE_PER_GPU  \
         --per_device_eval_batch_size $BATCH_SIZE_PER_GPU  \
@@ -33,7 +32,7 @@ python -m torch.distributed.run --nproc_per_node=8 \
         --evaluation_strategy no \
         --save_strategy steps \
         --save_steps 10000  \
-        --save_total_limit 2 \
+        --save_total_limit 1 \
         --learning_rate 2e-5 \
         --weight_decay 0.  \
         --warmup_ratio 0.03  \
@@ -42,6 +41,6 @@ python -m torch.distributed.run --nproc_per_node=8 \
         --fsdp "full_shard auto_wrap" \
         --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
         --tf32 True  \
-        --model_max_length 2048  \
+        --model_max_length 4096  \
         --gradient_checkpointing True  \
         --lazy_preprocess True
