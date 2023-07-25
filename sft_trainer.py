@@ -130,7 +130,7 @@ training_args = TrainingArguments(
     dataloader_num_workers=1 if script_args.debug else 96,
     evaluation_strategy='no',
     save_strategy='steps',
-    save_steps=10 if script_args.debug else 1000,
+    save_steps=5 if script_args.debug else 1000,
     save_total_limit=1,
     report_to=script_args.log_with,
     push_to_hub=True,
@@ -165,3 +165,6 @@ trainer = SFT_SafeSaveTrainer(
 )
 
 trainer.train()
+
+trainer.save_model(script_args.output_dir)
+trainer.push_to_hub()
