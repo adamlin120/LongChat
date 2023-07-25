@@ -21,7 +21,7 @@ from peft import LoraConfig
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, HfArgumentParser, TrainingArguments, AutoTokenizer
 
-from trl import SFTTrainer
+from safe_save_trainer import SFT_SafeSaveTrainer
 from longchat.train.monkey_patch.llama_flash_attn_monkey_patch import (
     replace_llama_attn_with_flash_attn
 )
@@ -113,7 +113,7 @@ en_wiki = en_wiki.select(range(int(len(en_wiki) * 0.10)))  # Select the first 10
 dataset = concatenate_datasets([zh_c4, zh_wiki, en_wiki])
 if script_args.debug:
     dataset = dataset.shuffle(seed=42)  # Shuffle the dataset
-    dataset = dataset.select(range(int(len(dataset) * 0.001)))  # Select the first 10%
+    dataset = dataset.select(range(int(len(dataset) * 0.0001)))  # Select the first 10%
 
 # Step 3: Define the training arguments
 # training_args = TrainingArguments(
@@ -162,7 +162,7 @@ else:
     peft_config = None
 
 # Step 5: Define the Trainer
-trainer = SFTTrainer(
+trainer = SFT_SafeSaveTrainer(
     model=model,
     tokenizer=tokenizer,
     args=training_args,
