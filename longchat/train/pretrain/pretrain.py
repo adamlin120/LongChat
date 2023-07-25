@@ -129,6 +129,7 @@ class LazySupervisedDataset(Dataset):
             else:
                 cur_data = json.loads(self.list_data_dict[i + self.dataset_index])
             cur_text = cur_data["text"]
+            print(f"Current text: {cur_text}")
             cur_tokenized_text = self.tokenizer(cur_text, return_tensors="pt")
 
             cur_len = len(cur_tokenized_text.input_ids[0])
