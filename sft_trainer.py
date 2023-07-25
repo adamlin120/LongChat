@@ -19,7 +19,7 @@ import torch
 from datasets import load_dataset, concatenate_datasets
 from peft import LoraConfig
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig, HfArgumentParser, TrainingArguments
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig, HfArgumentParser, TrainingArguments, AutoTokenizer
 
 from trl import SFTTrainer
 from longchat.train.monkey_patch.llama_flash_attn_monkey_patch import (
@@ -92,6 +92,15 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype=torch_dtype,
     use_auth_token=script_args.use_auth_token,
 )
+model.config.use_cache = False
+
+tokenizer = AutoTokenizer.from_pretrained(
+    script_args.model_name,
+    model_max_length=script_args.seq_length,
+    padding_side="right",
+    use_fast=False,
+)
+tokenizer.pad_token = tokenizer.eos_token
 
 # Step 2: Load the dataset
 zh_c4 = load_dataset("yentinglin/zh_TW_c4", split='train')
@@ -155,6 +164,7 @@ else:
 # Step 5: Define the Trainer
 trainer = SFTTrainer(
     model=model,
+    tokenizer=tokenizer,
     args=training_args,
     train_dataset=dataset,
     dataset_text_field=script_args.dataset_text_field,
