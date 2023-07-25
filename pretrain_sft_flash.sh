@@ -22,7 +22,6 @@ echo "using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_AC
 python -m torch.distributed.run --nproc_per_node=8 \
         sft_trainer.py \
         --model_name_or_path $MODEL_NAME \
-        --data_path pretrain  \
         --bf16 \
         --output_dir "zh_llama2/${MODEL_SIZE}" \
         --num_train_epochs 1    \
