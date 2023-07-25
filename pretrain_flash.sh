@@ -33,6 +33,10 @@ python -m torch.distributed.run --nproc_per_node=8 \
         --save_strategy steps \
         --save_steps 10000  \
         --save_total_limit 1 \
+        --push_to_hub True \
+        --hub_model_id "Taiwan_llama2_${MODEL_SIZE}" \
+        --hub_token "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" \
+        --hub_private_repo True \
         --learning_rate 2e-5 \
         --weight_decay 0.  \
         --warmup_ratio 0.03  \
