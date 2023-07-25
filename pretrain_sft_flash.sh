@@ -20,9 +20,9 @@ echo "Training llama2 model: ${MODEL_NAME}"
 echo "using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
 
 
-python -m torch.distributed.run \
-  --nproc_per_node=8 \
+deepspeed \
   sft_trainer.py \
+  --deepspeed stage3_no_offloading.conf \
   --model_name $MODEL_NAME \
   --output_dir "zh_llama2/${MODEL_SIZE}" \
   --debug $DEBUG \

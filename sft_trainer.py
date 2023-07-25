@@ -64,6 +64,7 @@ class ScriptArguments:
     num_train_epochs: Optional[int] = field(default=1, metadata={"help": "the number of training epochs"})
     max_steps: Optional[int] = field(default=-1, metadata={"help": "the number of training steps"})
     debug: Optional[bool] = field(default=False, metadata={"help": "Enable debug mode"})
+    deepspeed: Optional[str] = field(default=None, metadata={"help": "Enable deepspeed training"})
 
 
 parser = HfArgumentParser(ScriptArguments)
@@ -113,7 +114,7 @@ en_wiki = en_wiki.select(range(int(len(en_wiki) * 0.10)))  # Select the first 10
 dataset = concatenate_datasets([zh_c4, zh_wiki, en_wiki])
 if script_args.debug:
     dataset = dataset.shuffle(seed=42)  # Shuffle the dataset
-    dataset = dataset.select(range(int(len(dataset) * 0.0001)))  # Select the first 10%
+    dataset = dataset.select(range(int(len(dataset) * 0.00001)))  # Select the first 10%
 
 # Step 3: Define the training arguments
 # training_args = TrainingArguments(
@@ -132,8 +133,9 @@ training_args = TrainingArguments(
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
     learning_rate=script_args.learning_rate,
     logging_steps=script_args.logging_steps,
-    fsdp=["full_shard", "auto_wrap"],
-    fsdp_transformer_layer_cls_to_wrap="LlamaDecoderLayer",
+    # fsdp=["full_shard", "auto_wrap"],
+    # fsdp_transformer_layer_cls_to_wrap="LlamaDecoderLayer",
+    deepspeed=script_args.deepspeed,
     bf16=True,
     tf32=True,
     gradient_checkpointing=True,
