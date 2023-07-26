@@ -46,7 +46,7 @@ class ScriptArguments:
     )
     dataset_text_field: Optional[str] = field(default="text", metadata={"help": "the text field of the dataset"})
     log_with: Optional[str] = field(default='all', metadata={"help": "use 'wandb' to log with wandb"})
-    learning_rate: Optional[float] = field(default=2e-5, metadata={"help": "the learning rate"})
+    learning_rate: Optional[float] = field(default=3e-4, metadata={"help": "the learning rate"})
     batch_size: Optional[int] = field(default=1, metadata={"help": "the batch size"})
     seq_length: Optional[int] = field(default=4096, metadata={"help": "Input sequence length"})
     gradient_accumulation_steps: Optional[int] = field(
