@@ -1,3 +1,7 @@
 apache_beam
 mwparserfromhell
 trl
+einops
+packaging
+ninja
+flash-attn
