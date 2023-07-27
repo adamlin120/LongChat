@@ -4,4 +4,5 @@ trl
 einops
 packaging
 ninja
-flash-attn
+datasets
+# flash-attn
