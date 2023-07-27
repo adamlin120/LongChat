@@ -1,8 +1,6 @@
-apache_beam
-mwparserfromhell
 trl
 einops
 packaging
 ninja
 datasets
-# flash-attn
+# pip install flash-attn --no-build-isolation

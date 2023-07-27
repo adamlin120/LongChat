@@ -8,7 +8,7 @@ DEBUG=${3:-0}
 
 MODEL_SIZE="${MODEL_SIZE_ARG}b"
 NUM_GPUS=8
-TOTAL_BATCH_SIZE=8
+TOTAL_BATCH_SIZE=128
 GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 
 MODEL_NAME="meta-llama/Llama-2-${MODEL_SIZE}-hf"
@@ -24,6 +24,6 @@ python -m torch.distributed.run \
   --nproc_per_node=8 \
   sft_trainer.py \
   --model_name $MODEL_NAME \
-  --output_dir "zh_llama2/${MODEL_SIZE}" \
+  --output_dir "zh_llama2_${MODEL_SIZE}" \
   --debug $DEBUG \
 

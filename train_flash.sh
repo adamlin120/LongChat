@@ -2,12 +2,12 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 # first cli argument is the model size, default is 7
 # second cli argument is the batch size per gpu, default is 1
-MODEL_SIZE_ARG=${1:-7}
-BATCH_SIZE_PER_GPU=${2:-1}
+MODEL_SIZE_ARG=${1:-13}
+BATCH_SIZE_PER_GPU=${2:-4}
 
 MODEL_SIZE="${MODEL_SIZE_ARG}b"
 NUM_GPUS=8
-TOTAL_BATCH_SIZE=8
+TOTAL_BATCH_SIZE=128
 GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 
 MODEL_NAME="meta-llama/Llama-2-${MODEL_SIZE}-hf"
@@ -33,15 +33,15 @@ python -m torch.distributed.run --nproc_per_node=8 \
         --evaluation_strategy no \
         --save_strategy steps \
         --save_steps 10000  \
-        --save_total_limit 2 \
+        --save_total_limit 1 \
         --learning_rate 2e-5 \
-        --weight_decay 0.  \
+        --weight_decay 0.0  \
         --warmup_ratio 0.03  \
         --lr_scheduler_type "cosine" \
         --logging_steps 1  \
         --fsdp "full_shard auto_wrap" \
         --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
         --tf32 True  \
-        --model_max_length 2048  \
+        --model_max_length 4096  \
         --gradient_checkpointing True  \
         --lazy_preprocess True

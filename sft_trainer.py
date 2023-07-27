@@ -106,14 +106,10 @@ tokenizer.pad_token = tokenizer.eos_token
 zh_c4 = load_dataset("yentinglin/zh_TW_c4", split='train')
 zh_wiki = load_dataset("yentinglin/zh_wiki", split='train')
 
-en_wiki = load_dataset("wikipedia", "20220301.en", split='train')
-en_wiki = en_wiki.shuffle(seed=42)  # Shuffle the dataset
-en_wiki = en_wiki.select(range(int(len(en_wiki) * 0.10)))  # Select the first 10%
-
-dataset = concatenate_datasets([zh_c4, zh_wiki, en_wiki])
+dataset = concatenate_datasets([zh_c4, zh_wiki])
 if script_args.debug:
     dataset = dataset.shuffle(seed=42)  # Shuffle the dataset
-    dataset = dataset.select(range(int(len(dataset) * 0.00001)))  # Select the first 10%
+    dataset = dataset.select(range(int(len(dataset) * 0.0001)))  # Select the first 10%
 
 # Step 3: Define the training arguments
 training_args = TrainingArguments(
@@ -126,7 +122,7 @@ training_args = TrainingArguments(
     fsdp_transformer_layer_cls_to_wrap="LlamaDecoderLayer",
     bf16=True,
     tf32=True,
-    gradient_checkpointing=True,
+    # gradient_checkpointing=True,
     dataloader_num_workers=1 if script_args.debug else 96,
     save_strategy='steps',
     save_steps=5 if script_args.debug else 10000,
