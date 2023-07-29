@@ -4,3 +4,4 @@ packaging
 ninja
 datasets
 # pip install flash-attn --no-build-isolation
+zeno-build
